@@ -36,19 +36,18 @@ const Login = () => {
         const res = await api.post("/auth/login", formData);
         const { token, user } = res.data;
 
-        // store token and role
+        // store token, role and name
         localStorage.setItem("token", token);
         localStorage.setItem("role", user.role);
+        localStorage.setItem("username", `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email);
 
         // Show success toast
         toast.success("Login successful!", { autoClose: 2000 });
 
         // Redirect after a short delay to allow toast to display
         setTimeout(() => {
-          if (user.role === "farmer") navigate("/dashboard/farmer");
-          else if (user.role === "consumer") navigate("/dashboard/consumer");
-          else navigate("/profile");
-        }, 1500);
+          navigate("/dashboard");
+        }, 1200);
       } catch (err) {
         console.error("Login failed:", err.response?.data || err.message);
         toast.error("Invalid email or password", { autoClose: 3000 });

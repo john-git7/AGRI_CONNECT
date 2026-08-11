@@ -1,185 +1,203 @@
-  import React, { useEffect, useRef } from "react";
-  import { motion } from "framer-motion";
-  import { Leaf, ShoppingCart, Upload, Bell, LogOut, User } from "lucide-react";
-  import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Leaf, Bell, LogOut, User, Check, Loader } from "lucide-react";
+import axios from "../axiosConfig";
+import FarmerDashboard from "./FarmerDashboard";
+import BuyerDashboard from "./BuyerDashboard";
+import AdminDashboard from "./AdminDashboard";
 
-  const Dashboard = () => {
-    const canvasRef = useRef(null);
-    const mouse = useRef({ x: null, y: null });
-    const navigate = useNavigate();
+const Dashboard = () => {
+  const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-    const role = localStorage.getItem("role");
-    const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username") || "User";
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
-    // Redirect if not logged in
-    useEffect(() => {
-      if (!token) navigate("/login");
-    }, [token, navigate]);
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    fetchProfileAndNotifications();
+  }, [token, navigate]);
 
-    // Role-based actions
-    const farmerActions = [
-      { label: "Upload Projects", icon: <Upload size={32} />, description: "Add new products or crops to your farm portfolio." },
-      { label: "Offer Your Farmland", icon: <Leaf size={32} />, description: "Lease your land to consumers for seasonal crops." },
-    ];
+  const fetchProfileAndNotifications = async () => {
+    try {
+      setLoading(true);
+      const profileRes = await axios.get("/auth/profile");
+      setUser(profileRes.data);
+      
+      // Store user ID for tracking
+      localStorage.setItem("userId", profileRes.data._id);
+      localStorage.setItem("username", `${profileRes.data.firstName} ${profileRes.data.lastName}`);
 
-    const consumerActions = [
-      { label: "View Products", icon: <ShoppingCart size={32} />, description: "Browse fresh products directly from farmers." },
-      { label: "Adopt a Crop", icon: <Leaf size={32} />, description: "Lease land from farmers to grow your own crops." },
-    ];
-
-    const actions = role === "farmer" ? farmerActions : consumerActions;
-
-    // Particle background with mouse interaction
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const resizeCanvas = () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      };
-      resizeCanvas();
-
-      const particleCount = 100;
-      const particles = Array.from({ length: particleCount }).map(() => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: Math.random() * 3 + 1,
-        dx: (Math.random() - 0.5) * 1,
-        dy: (Math.random() - 0.5) * 1,
-      }));
-
-      const handleMouseMove = (e) => {
-        mouse.current.x = e.clientX;
-        mouse.current.y = e.clientY;
-      };
-      window.addEventListener("mousemove", handleMouseMove);
-
-      const animate = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        particles.forEach((p) => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = "rgb(95,141,78)";
-          ctx.fill();
-
-          p.x += p.dx;
-          p.y += p.dy;
-          if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
-          if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
-
-          if (mouse.current.x && mouse.current.y) {
-            const dx = p.x - mouse.current.x;
-            const dy = p.y - mouse.current.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 100) {
-              ctx.beginPath();
-              ctx.strokeStyle = `rgba(95,141,78,${1 - dist / 100})`;
-              ctx.lineWidth = 2;
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(mouse.current.x, mouse.current.y);
-              ctx.stroke();
-            }
-          }
-        });
-
-        requestAnimationFrame(animate);
-      };
-
-      animate();
-      window.addEventListener("resize", resizeCanvas);
-
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("resize", resizeCanvas);
-      };
-    }, []);
-
-    return (
-      <div className="relative min-h-screen bg-gray-50 text-[rgb(40,84,48)]">
-        <canvas ref={canvasRef} className="absolute inset-0 z-0" />
-
-        {/* Top Navigation */}
-        <motion.div className="relative z-10 flex items-center justify-between px-8 py-4 bg-white/90 backdrop-blur-md shadow-md border-b border-[rgb(164,190,123)]">
-          <div className="flex items-center gap-3">
-            <Leaf size={28} className="text-[rgb(95,141,78)]" />
-            <h1 className="text-xl font-bold">{role === "farmer" ? "Farmer Dashboard" : "Consumer Dashboard"}</h1>
-          </div>
-          <div className="flex items-center gap-6">
-            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-            </motion.button>
-            <motion.div className="flex items-center gap-2 cursor-pointer" whileHover={{ scale: 1.05 }} onClick={() => navigate("/profile")}>
-              <User size={24} />
-              <span className="hidden sm:inline font-medium">{username}</span>
-            </motion.div>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 text-red-600 font-semibold"
-              onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("role");
-                localStorage.removeItem("username");
-                navigate("/login");
-              }}
-            >
-              <LogOut size={20} />
-              Logout
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Dashboard Content */}
-        <motion.div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-20 flex justify-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6 mt-30">
-            {actions.map((action) => (
-              <motion.div
-                key={action.label}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-white rounded-2xl shadow-lg p-7 flex flex-col items-center justify-between text-center border border-[rgb(164,190,123)] transition-shadow hover:shadow-2xl cursor-pointer"
-              >
-                <div className="flex flex-col justify-center items-center gap-3 ">
-                  <div
-                    className={`p-4 rounded-full ${
-                      role === "farmer"
-                        ? "bg-gradient-to-r from-[rgb(95,141,78)] to-[rgb(40,84,48)] text-white"
-                        : "bg-[rgb(164,190,123)] text-white"
-                    }`}
-                  >
-                    {action.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold">{action.label}</h3>
-                  <p className="text-sm text-gray-700">{action.description}</p>
-                </div>
-                <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  if (action.label === "Upload Projects") navigate("/upload-projects");
-                  if (action.label === "Offer Your Farmland") navigate("/adopt-crop");
-                  if (action.label === "View Products") navigate("/consumer-products");
-                  if (action.label === "Adopt a Crop") navigate("/consumer-adopt");
-
-                }}
-                className={`mt-4 px-4 py-2 rounded-xl font-semibold text-sm ${
-                  role === "farmer"
-                    ? "bg-gradient-to-r from-[rgb(95,141,78)] to-[rgb(40,84,48)] text-white"
-                    : "bg-[rgb(95,141,78)] text-white"
-                }`}
-              >
-                Go
-              </motion.button>
-              
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    );
+      const notifRes = await axios.get("/notifications");
+      setNotifications(notifRes.data);
+    } catch (err) {
+      console.error("Dashboard mount fetch error", err);
+      // If token expired, clear and redirect
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      navigate("/login");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  export default Dashboard;
+  const handleMarkAsRead = async (notifId) => {
+    try {
+      await axios.put(`/notifications/${notifId}/read`);
+      setNotifications(prev => prev.map(n => n._id === notifId ? { ...n, read: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-slate-500 bg-[#FAF9F6]">
+        <Loader className="animate-spin text-emerald-850" size={32} />
+        <span className="text-sm font-semibold">Validating credentials...</span>
+      </div>
+    );
+  }
+
+  // Count unread notifications
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-800 antialiased flex flex-col">
+      {/* Top Navbar */}
+      <nav className="sticky top-0 z-40 bg-white/95 border-b border-emerald-100 px-4 md:px-6 py-4 shadow-sm backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          
+          {/* Logo */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="bg-emerald-850 p-2 rounded-xl text-white">
+              <Leaf size={18} />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-emerald-950">
+              AgriConnect <span className="hidden sm:inline-block text-xs bg-emerald-100 text-emerald-850 px-2 py-0.5 rounded ml-2 font-medium tracking-wide">B2B PLATFORM</span>
+            </span>
+          </div>
+
+          {/* Nav Items */}
+          <div className="flex items-center gap-6">
+            
+            {/* Notifications Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-emerald-600 border-2 border-white rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Popover Dropdown */}
+              <AnimatePresence>
+                {showNotifications && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                    <motion.div
+                      className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden"
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    >
+                      <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <span className="font-bold text-slate-800 text-xs uppercase tracking-wider">Ecosystem Alerts</span>
+                        <span className="text-[10px] text-slate-400 font-semibold">{unreadCount} Unread</span>
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
+                        {notifications.length === 0 ? (
+                          <p className="text-xs text-slate-400 p-6 text-center">No alerts logged.</p>
+                        ) : (
+                          notifications.map((notif) => (
+                            <div 
+                              key={notif._id} 
+                              className={`p-4 space-y-1 hover:bg-slate-50 transition cursor-pointer text-left ${
+                                !notif.read ? "bg-emerald-50/25" : ""
+                              }`}
+                              onClick={() => handleMarkAsRead(notif._id)}
+                            >
+                              <div className="flex justify-between items-start gap-2">
+                                <span className="font-bold text-xs text-emerald-950">{notif.title}</span>
+                                {!notif.read && (
+                                  <button className="text-emerald-700 hover:text-emerald-900">
+                                    <Check size={12} />
+                                  </button>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                                {notif.message}
+                              </p>
+                              <span className="text-[9px] text-slate-400 block font-medium">
+                                {new Date(notif.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Profile Navigation */}
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
+              onClick={() => navigate("/profile")}
+            >
+              <div className="bg-emerald-100 p-2 rounded-xl text-emerald-850">
+                <User size={18} />
+              </div>
+              <div className="hidden md:block text-left text-xs font-semibold">
+                <span className="block text-slate-800 font-bold">
+                  {user?.firstName} {user?.lastName}
+                </span>
+                <span className="block text-slate-400 uppercase text-[9px] tracking-wider font-bold">
+                  {user?.organizationName || user?.role}
+                </span>
+              </div>
+            </div>
+
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-xs font-bold text-red-650 hover:bg-red-50 px-3.5 py-2 rounded-xl transition"
+            >
+              <LogOut size={16} />
+              <span className="hidden md:inline">Sign Out</span>
+            </button>
+
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Workspace */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10 w-full flex-grow">
+        {user?.role === "farmer" && <FarmerDashboard />}
+        {user?.role === "buyer" && <BuyerDashboard />}
+        {user?.role === "admin" && <AdminDashboard />}
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;
