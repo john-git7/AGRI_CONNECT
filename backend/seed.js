@@ -1,3 +1,10 @@
+const dns = require("dns");
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (err) {
+  // Ignore DNS config warnings in non-local environments
+}
+
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
@@ -13,7 +20,7 @@ const ProcurementOrder = require("./models/ProcurementOrder");
 const Notification = require("./models/Notification");
 
 const path = require("path");
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/agri_connect";
 

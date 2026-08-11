@@ -26,26 +26,26 @@ const Home = () => {
   return (
     <div className="bg-[#FAF9F6] min-h-screen text-slate-800 selection:bg-emerald-800 selection:text-white">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-emerald-100 px-4 sm:px-6 py-4">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-emerald-100 px-3 sm:px-6 py-3.5 sm:py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-850 p-2 rounded-xl text-white">
-              <Leaf size={22} />
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="bg-emerald-800 p-1.5 sm:p-2 rounded-xl text-white">
+              <Leaf size={18} className="sm:w-[22px] sm:h-[22px]" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-emerald-900">
+            <span className="text-base sm:text-xl font-bold tracking-tight text-emerald-900">
               Agri<span className="text-emerald-600 font-medium">Connect</span>
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4">
             <Link 
               to="/login" 
-              className="text-emerald-950 font-medium hover:text-emerald-700 transition text-sm sm:text-base"
+              className="text-emerald-950 font-semibold hover:text-emerald-700 transition text-xs sm:text-base whitespace-nowrap"
             >
               Sign In
             </Link>
             <Link 
               to="/signup" 
-              className="bg-emerald-850 hover:bg-emerald-900 text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium shadow-sm hover:shadow transition text-sm sm:text-base"
+              className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl font-semibold shadow-sm hover:shadow transition text-xs sm:text-base whitespace-nowrap"
             >
               Get Started
             </Link>
@@ -92,7 +92,7 @@ const Home = () => {
           >
             <Link
               to="/signup"
-              className="bg-emerald-850 hover:bg-emerald-900 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 group w-full sm:w-auto justify-center"
+              className="bg-emerald-800 hover:bg-emerald-900 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 group w-full sm:w-auto justify-center animate-pulse"
             >
               Find Agricultural Supply
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

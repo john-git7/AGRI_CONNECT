@@ -82,11 +82,11 @@ const Dashboard = () => {
           
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="bg-emerald-850 p-2 rounded-xl text-white">
+            <div className="bg-emerald-800 p-2 rounded-xl text-white">
               <Leaf size={18} />
             </div>
             <span className="text-lg font-bold tracking-tight text-emerald-950">
-              AgriConnect <span className="hidden sm:inline-block text-xs bg-emerald-100 text-emerald-850 px-2 py-0.5 rounded ml-2 font-medium tracking-wide">B2B PLATFORM</span>
+              AgriConnect <span className="hidden sm:inline-block text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded ml-2 font-medium tracking-wide">B2B PLATFORM</span>
             </span>
           </div>
 

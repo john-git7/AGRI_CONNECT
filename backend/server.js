@@ -1,3 +1,12 @@
+if (process.env.NODE_ENV !== "production") {
+  const dns = require("dns");
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  } catch (err) {
+    console.warn("Could not set custom DNS servers:", err.message);
+  }
+}
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -5,7 +14,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 
 // Load Environment Variables
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
 
 // Initialize Express App
 const app = express();
@@ -39,24 +48,15 @@ app.use("/api/procurement", procurementRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// Connect to MongoDB with local fallback
-const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/agri_connect";
+// Connect to MongoDB
+const mongoURI = process.env.MONGO_URI;
 mongoose
   .connect(mongoURI)
-  .then(() => console.log("MongoDB connected successfully"))
+  .then(() => console.log("MongoDB Atlas connected successfully"))
   .catch((err) => {
-    if (mongoURI !== "mongodb://localhost:27017/agri_connect") {
-      console.warn("MongoDB Atlas connection failed. Falling back to local MongoDB on port 27017...");
-      mongoose.connect("mongodb://localhost:27017/agri_connect")
-        .then(() => console.log("MongoDB connected successfully to local database"))
-        .catch((localErr) => {
-          console.error("Local MongoDB fallback connection error:", localErr);
-          process.exit(1);
-        });
-    } else {
-      console.error("MongoDB connection error:", err);
-      process.exit(1);
-    }
+    console.error("MongoDB Atlas connection failed:");
+    console.error(err.message || err);
+    process.exit(1);
   });
 
 // Start Server
