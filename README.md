@@ -113,7 +113,7 @@ Ensure you have **Node.js** and **MongoDB** (running on local port `27017` or At
 1. Open the `.env` file in the backend folder and configure the target MongoDB Atlas connection string and JWT secret:
    ```env
    MONGO_URI=your_mongodb_atlas_connection_string
-   JWT_SECRET=955ee5d2df1bec8c40a04c5d2eb0ffe7
+   JWT_SECRET=your_jwt_secret
    PORT=5000
    ```
 2. Navigate to the backend folder and install server dependencies:
