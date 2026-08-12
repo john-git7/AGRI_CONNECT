@@ -2,9 +2,18 @@ const { fork } = require("child_process");
 const path = require("path");
 
 // Start the backend server
-console.log("Starting backend server for integration tests...");
-const serverProcess = fork(path.join(__dirname, "server.js"), [], {
+const serverProcess = fork(path.join(__dirname, "server.js"), ["--port=5001"], {
   env: { ...process.env, PORT: 5001 } // run on port 5001 to avoid conflicts
+});
+
+serverProcess.on("error", (err) => {
+  console.error("❌ Test Server child process error:", err);
+});
+
+serverProcess.on("exit", (code, signal) => {
+  if (code !== 0 && code !== null) {
+    console.error(`❌ Test Server child process exited unexpectedly with code ${code} (Signal: ${signal})`);
+  }
 });
 
 // Helper for waiting

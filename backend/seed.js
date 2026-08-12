@@ -28,11 +28,11 @@ async function seed() {
   try {
     console.log("Connecting to MongoDB...");
     try {
-      await mongoose.connect(MONGO_URI);
+      await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
     } catch (err) {
       if (MONGO_URI !== "mongodb://localhost:27017/agri_connect") {
         console.warn("MongoDB Atlas connection failed. Falling back to local MongoDB on port 27017...");
-        await mongoose.connect("mongodb://localhost:27017/agri_connect");
+        await mongoose.connect("mongodb://localhost:27017/agri_connect", { serverSelectionTimeoutMS: 5000 });
       } else {
         throw err;
       }

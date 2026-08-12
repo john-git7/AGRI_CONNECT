@@ -50,16 +50,27 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // Connect to MongoDB
-const mongoURI = process.env.MONGO_URI;
+const mongoURI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/agri_connect";
 mongoose
-  .connect(mongoURI)
+  .connect(mongoURI, { serverSelectionTimeoutMS: 5000 })
   .then(() => console.log("MongoDB Atlas connected successfully"))
   .catch((err) => {
-    console.error("MongoDB Atlas connection failed:");
-    console.error(err.message || err);
-    process.exit(1);
+    if (mongoURI !== "mongodb://127.0.0.1:27017/agri_connect") {
+      console.warn("MongoDB Atlas connection failed. Falling back to local MongoDB on port 27017...");
+      mongoose
+        .connect("mongodb://127.0.0.1:27017/agri_connect", { serverSelectionTimeoutMS: 5000 })
+        .then(() => console.log("MongoDB connected successfully to local database fallback"))
+        .catch((localErr) => {
+          console.error("Local MongoDB fallback connection error:", localErr.message || localErr);
+          process.exit(1);
+        });
+    } else {
+      console.error("MongoDB connection failed:", err.message || err);
+      process.exit(1);
+    }
   });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const argPort = process.argv.find(arg => arg.startsWith("--port="))?.split("=")[1];
+const PORT = argPort ? Number(argPort) : (process.env.PORT || 5000);
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
