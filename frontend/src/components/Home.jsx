@@ -62,7 +62,7 @@ const Home = () => {
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 bg-emerald-100/80 border border-emerald-200 text-emerald-800 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold"
           >
-            <Cpu size={14} /> AI-Powered Pre-Harvest Supply & Procurement
+            <Cpu size={14} /> Smart Pre-Harvest Supply & Procurement
           </motion.div>
 
           <motion.h1 
@@ -81,7 +81,7 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            Connect future agricultural demand with future agricultural supply. We enable bulk buyers to commit to crop purchases before cultivation, helping farmers secure guaranteed demand and pre-harvest support, while delivering real-time cultivation tracking and AI predictions.
+            Connect future agricultural demand with future agricultural supply. We enable bulk buyers to commit to crop purchases before cultivation, helping farmers secure guaranteed demand and pre-harvest support, while delivering real-time cultivation tracking and predictive yields.
           </motion.p>
 
           <motion.div 
@@ -116,10 +116,10 @@ const Home = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
             {[
               { title: "Buyer Demand", desc: "Procurement targets published", step: "01" },
-              { title: "Crop Matching", desc: "AI connects regional capacity", step: "02" },
+              { title: "Crop Matching", desc: "System matches regional capacity", step: "02" },
               { title: "Commitment", desc: "B2B pre-harvest pre-adoption", step: "03" },
               { title: "Cultivation Tracking", desc: "Real-time logs & updates", step: "04" },
-              { title: "AI Predictions", desc: "Yield and risk intelligence", step: "05" },
+              { title: "Yield Forecasts", desc: "Volume and risk intelligence", step: "05" },
               { title: "Direct Procurement", desc: "Harvest shipment & fulfillment", step: "06" }
             ].map((item, idx) => (
               <div key={idx} className="relative p-5 sm:p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100 flex flex-col justify-between min-h-[140px]">
@@ -154,7 +154,7 @@ const Home = () => {
             </div>
             <div className="p-4 bg-emerald-50 border-l-4 border-emerald-600 rounded-r-xl">
               <span className="block font-bold text-emerald-950 text-sm">AGRICONNECT FLOW (PROACTIVE)</span>
-              <p className="text-xs text-emerald-800 mt-1">Buyer Demand → Secure Commitment → Cultivation tracking with AI → Assured direct procurement</p>
+              <p className="text-xs text-emerald-800 mt-1">Buyer Demand → Secure Commitment → Cultivation tracking with Smart Insights → Assured direct procurement</p>
             </div>
           </div>
         </div>
@@ -211,7 +211,7 @@ const Home = () => {
               <div className="bg-emerald-800 w-12 h-12 rounded-xl flex items-center justify-center text-emerald-300">
                 <Cpu size={22} />
               </div>
-              <h3 className="text-xl font-bold">AI Yield & Risk Prediction</h3>
+              <h3 className="text-xl font-bold">Predictive Yield & Risk Forecasts</h3>
               <p className="text-emerald-100/70 text-sm leading-relaxed">
                 Calculates yields per acre using crop agronomics and evaluates environmental risk indexes based on regional climates.
               </p>

@@ -553,11 +553,11 @@ const BuyerDashboard = () => {
                   </div>
                 </div>
 
-                {/* AI weather and yield forecasts */}
+                {/* Predictive weather and yield forecasts */}
                 <div className="bg-emerald-50/50 border border-emerald-100 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center gap-2 text-emerald-950 font-bold text-sm">
                     <Cpu size={18} className="text-emerald-700" />
-                    <span>AI Production Insights</span>
+                    <span>Predictive Production Insights</span>
                   </div>
 
                   {aiLoading ? (
@@ -652,7 +652,7 @@ const BuyerDashboard = () => {
         <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-6">
           <div>
             <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-1">Supply Gaps Forecast</h3>
-            <p className="text-xs text-slate-400">AI analysis of current contracted commitments against published requirements.</p>
+            <p className="text-xs text-slate-400">System analysis of current contracted commitments against published requirements.</p>
           </div>
 
           <div className="space-y-4">

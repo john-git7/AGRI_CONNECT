@@ -411,11 +411,11 @@ const FarmerDashboard = () => {
                   </div>
                 </div>
 
-                {/* AI Intelligence Workspace Card */}
+                {/* Analytical Intelligence Workspace Card */}
                 <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 space-y-4">
                   <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
                     <Cpu size={18} className="text-emerald-750" />
-                    <span>AI Project Insights (MVP Seeded Engine)</span>
+                    <span>Project Analytics (Analytical Insights Engine)</span>
                   </div>
                   
                   {aiLoading ? (
