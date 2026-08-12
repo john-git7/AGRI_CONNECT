@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const supportRequestSchema = new mongoose.Schema(
   {
-    farmProject: { type: mongoose.Schema.Types.ObjectId, ref: "FarmProject", required: true },
+    farmProject: { type: mongoose.Schema.Types.ObjectId, ref: "FarmProject", required: false },
     farmer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     cultivationCost: { type: Number, required: true },
     farmerContribution: { type: Number, required: true },

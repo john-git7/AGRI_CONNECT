@@ -35,11 +35,12 @@ router.post("/", auth, async (req, res) => {
       supportRequired,
       expectedHarvestDate,
       buyerId,
-      buyerRequirementId
+      buyerRequirementId,
+      farmerId
     } = req.body;
 
     const project = new FarmProject({
-      farmer: req.user.id,
+      farmer: req.user.role === "admin" ? (farmerId || req.user.id) : req.user.id,
       crop,
       variety: variety || "Hybrid Standard",
       acreage: Number(acreage),
@@ -110,7 +111,7 @@ router.put("/:id", auth, async (req, res) => {
     let project = await FarmProject.findById(req.params.id);
     if (!project) return res.status(404).json({ msg: "Farm project not found" });
 
-    // Authorization: Only the owner farmer or admin or the buyer (only for risk level updates maybe, but let's restrict write to farmer/admin)
+    // Authorization: Only the owner farmer or admin or the buyer
     if (project.farmer.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ msg: "Unauthorized" });
     }
@@ -122,7 +123,17 @@ router.put("/:id", auth, async (req, res) => {
       actualHarvestDate,
       estimatedYield,
       progressPercentage,
-      status
+      status,
+      crop,
+      variety,
+      acreage,
+      location,
+      committedQuantity,
+      cultivationCost,
+      supportRequired,
+      buyerId,
+      buyerRequirementId,
+      farmerId
     } = req.body;
 
     if (currentStage) {
@@ -141,6 +152,20 @@ router.put("/:id", auth, async (req, res) => {
     if (estimatedYield !== undefined) project.expectedYield = Number(estimatedYield);
     if (status) project.status = status;
 
+    // Admin updates
+    if (req.user.role === "admin") {
+      if (crop) project.crop = crop;
+      if (variety) project.variety = variety;
+      if (acreage !== undefined) project.acreage = Number(acreage);
+      if (location) project.location = location;
+      if (committedQuantity !== undefined) project.committedQuantity = Number(committedQuantity);
+      if (cultivationCost !== undefined) project.cultivationCost = Number(cultivationCost);
+      if (supportRequired !== undefined) project.supportRequired = Number(supportRequired);
+      if (buyerId) project.buyer = buyerId;
+      if (buyerRequirementId) project.buyerRequirement = buyerRequirementId;
+      if (farmerId) project.farmer = farmerId;
+    }
+
     await project.save();
 
     // Create Notification for the Bulk Buyer about the updates
@@ -152,6 +177,24 @@ router.put("/:id", auth, async (req, res) => {
     await updateNotif.save();
 
     res.json(project);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// DELETE /api/farm-projects/:id
+// @access Private (Admin only)
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can delete farm projects" });
+    }
+    const project = await FarmProject.findById(req.params.id);
+    if (!project) return res.status(404).json({ msg: "Farm project not found" });
+
+    await FarmProject.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Farm project deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });

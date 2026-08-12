@@ -12,9 +12,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function runTests() {
   // Wait for server to bind port
-  await sleep(2500);
+  await sleep(4000);
 
-  const BASE_URL = "http://localhost:5001/api";
+  const BASE_URL = "http://127.0.0.1:5001/api";
   console.log("\n==================================================");
   console.log("RUNNING AGRICONNECT INTEGRATION TESTS");
   console.log("==================================================\n");

@@ -12,17 +12,17 @@ router.post("/", auth, async (req, res) => {
       return res.status(403).json({ msg: "Only buyers can create procurement orders" });
     }
 
-    const { farmProjectId, quantity, quality, agreedPrice, totalValue, deliveryLocation } = req.body;
+    const { farmProjectId, quantity, quality, agreedPrice, totalValue, deliveryLocation, buyerId, farmerId } = req.body;
 
     const project = await FarmProject.findById(farmProjectId);
     if (!project) return res.status(404).json({ msg: "Farm project not found" });
 
     const order = new ProcurementOrder({
-      buyer: req.user.id,
-      farmer: project.farmer,
+      buyer: req.user.role === "admin" ? (buyerId || req.user.id) : req.user.id,
+      farmer: req.user.role === "admin" ? (farmerId || project.farmer) : project.farmer,
       farmProject: farmProjectId,
       quantity: Number(quantity),
-      quality: quality || project.buyerRequirement.quality || "Grade A",
+      quality: quality || project.buyerRequirement?.quality || "Grade A",
       agreedPrice: Number(agreedPrice),
       totalValue: Number(totalValue),
       deliveryLocation,
@@ -33,7 +33,7 @@ router.post("/", auth, async (req, res) => {
 
     // Notify Farmer
     const notif = new Notification({
-      userId: project.farmer,
+      userId: order.farmer,
       title: "New Procurement Order Initiated",
       message: `Buyer has initiated procurement for ${project.crop}. Quantity: ${quantity} tonnes, Value: ₹${totalValue}.`
     });
@@ -83,7 +83,7 @@ router.put("/:id/status", auth, async (req, res) => {
 
     // If order is completed, update the FarmProject status as well!
     if (status === "COMPLETED" || status === "DELIVERED") {
-      const project = await FarmProject.findById(order.farmProject._id);
+      const project = await FarmProject.findById(order.farmProject?._id);
       if (project) {
         project.currentStage = "DELIVERED";
         project.progressPercentage = 100;
@@ -96,18 +96,64 @@ router.put("/:id/status", auth, async (req, res) => {
     const farmerNotif = new Notification({
       userId: order.farmer,
       title: "Procurement Order Status Update",
-      message: `Your procurement order of ${order.quantity} tonnes of ${order.farmProject.crop} is now ${status}.`
+      message: `Your procurement order of ${order.quantity} tonnes of ${order.farmProject?.crop || ""} is now ${status}.`
     });
     await farmerNotif.save();
 
     const buyerNotif = new Notification({
       userId: order.buyer,
       title: "Procurement Order Status Update",
-      message: `Your procurement order of ${order.quantity} tonnes of ${order.farmProject.crop} is now ${status}.`
+      message: `Your procurement order of ${order.quantity} tonnes of ${order.farmProject?.crop || ""} is now ${status}.`
     });
     await buyerNotif.save();
 
     res.json(order);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// PUT /api/procurement/:id - Edit generic procurement details (Admin only)
+router.put("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can edit procurement order details" });
+    }
+    const order = await ProcurementOrder.findById(req.params.id);
+    if (!order) return res.status(404).json({ msg: "Procurement order not found" });
+
+    const { farmProjectId, quantity, quality, agreedPrice, totalValue, deliveryLocation, status, buyerId, farmerId } = req.body;
+
+    if (farmProjectId) order.farmProject = farmProjectId;
+    if (quantity !== undefined) order.quantity = Number(quantity);
+    if (quality) order.quality = quality;
+    if (agreedPrice !== undefined) order.agreedPrice = Number(agreedPrice);
+    if (totalValue !== undefined) order.totalValue = Number(totalValue);
+    if (deliveryLocation) order.deliveryLocation = deliveryLocation;
+    if (status) order.status = status;
+    if (buyerId) order.buyer = buyerId;
+    if (farmerId) order.farmer = farmerId;
+
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// DELETE /api/procurement/:id - Delete a procurement order (Admin only)
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can delete procurement orders" });
+    }
+    const order = await ProcurementOrder.findById(req.params.id);
+    if (!order) return res.status(404).json({ msg: "Procurement order not found" });
+
+    await ProcurementOrder.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Procurement order deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });

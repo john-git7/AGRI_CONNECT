@@ -237,4 +237,149 @@ router.put("/users/:id/verify", auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/users
+// @access  Private (Admin only)
+router.post("/users", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can create users" });
+    }
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      city,
+      password,
+      role,
+      farmName,
+      location,
+      acreage,
+      crops,
+      organizationName,
+      organizationType,
+      procurementCategories,
+      verificationStatus
+    } = req.body;
+
+    if (!firstName || !lastName || !email || !phone || !city || !location || !password || !role) {
+      return res.status(400).json({ msg: "Please fill in all required fields" });
+    }
+
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user = new User({
+      firstName,
+      lastName,
+      email,
+      phone,
+      city,
+      role,
+      password: hashedPassword,
+      farmName,
+      location,
+      acreage: acreage ? Number(acreage) : 0,
+      crops: Array.isArray(crops) ? crops : (crops ? crops.split(",").map(c => c.trim()) : []),
+      organizationName,
+      organizationType,
+      procurementCategories: Array.isArray(procurementCategories)
+        ? procurementCategories
+        : (procurementCategories ? procurementCategories.split(",").map(c => c.trim()) : []),
+      verificationStatus: verificationStatus || "PENDING"
+    });
+
+    await user.save();
+    res.status(201).json({ msg: "User created successfully", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// @route   PUT /api/auth/users/:id
+// @access  Private (Admin only)
+router.put("/users/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can update users" });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      city,
+      password,
+      role,
+      farmName,
+      location,
+      acreage,
+      crops,
+      organizationName,
+      organizationType,
+      procurementCategories,
+      verificationStatus
+    } = req.body;
+
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (city) user.city = city;
+    if (role) user.role = role;
+    if (farmName !== undefined) user.farmName = farmName;
+    if (location) user.location = location;
+    if (acreage !== undefined) user.acreage = Number(acreage);
+    if (crops !== undefined) {
+      user.crops = Array.isArray(crops) ? crops : (crops ? crops.split(",").map(c => c.trim()) : []);
+    }
+    if (organizationName !== undefined) user.organizationName = organizationName;
+    if (organizationType !== undefined) user.organizationType = organizationType;
+    if (procurementCategories !== undefined) {
+      user.procurementCategories = Array.isArray(procurementCategories)
+        ? procurementCategories
+        : (procurementCategories ? procurementCategories.split(",").map(c => c.trim()) : []);
+    }
+    if (verificationStatus) user.verificationStatus = verificationStatus;
+
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+    res.json({ msg: "User updated successfully", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// @route   DELETE /api/auth/users/:id
+// @access  Private (Admin only)
+router.delete("/users/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can delete users" });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ msg: "User deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 module.exports = router;

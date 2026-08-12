@@ -9,10 +9,10 @@ router.post("/", auth, async (req, res) => {
     if (req.user.role !== "buyer" && req.user.role !== "admin") {
       return res.status(403).json({ msg: "Only buyers can create requirements" });
     }
-    const { crop, quantity, quality, location, expectedDelivery, targetPrice } = req.body;
+    const { crop, quantity, quality, location, expectedDelivery, targetPrice, buyerId } = req.body;
 
     const newReq = new BuyerRequirement({
-      buyerId: req.user.id,
+      buyerId: req.user.role === "admin" ? (buyerId || req.user.id) : req.user.id,
       crop,
       quantity,
       quality,

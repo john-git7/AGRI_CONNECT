@@ -13,26 +13,28 @@ router.post("/", auth, async (req, res) => {
       return res.status(403).json({ msg: "Only farmers can submit crop commitments" });
     }
 
-    const { buyerRequirementId, expectedYield, committedQuantity } = req.body;
+    const { buyerRequirementId, expectedYield, committedQuantity, farmerId, buyerId } = req.body;
 
     const requirement = await BuyerRequirement.findById(buyerRequirementId);
     if (!requirement) {
       return res.status(404).json({ msg: "Buyer requirement not found" });
     }
 
+    const targetFarmer = req.user.role === "admin" ? (farmerId || req.user.id) : req.user.id;
+
     // Check if farmer already committed to this requirement
     const existing = await CropCommitment.findOne({
       buyerRequirement: buyerRequirementId,
-      farmer: req.user.id
+      farmer: targetFarmer
     });
     if (existing) {
-      return res.status(400).json({ msg: "You have already submitted a commitment for this requirement" });
+      return res.status(400).json({ msg: "A commitment has already been submitted for this requirement and farmer" });
     }
 
     const commitment = new CropCommitment({
       buyerRequirement: buyerRequirementId,
-      farmer: req.user.id,
-      buyer: requirement.buyerId,
+      farmer: targetFarmer,
+      buyer: buyerId || requirement.buyerId,
       expectedYield: Number(expectedYield),
       committedQuantity: Number(committedQuantity),
       status: "PENDING"
@@ -42,7 +44,7 @@ router.post("/", auth, async (req, res) => {
 
     // Create Notification for the Buyer
     const notif = new Notification({
-      userId: requirement.buyerId,
+      userId: commitment.buyer,
       title: "New Crop Commitment",
       message: `A farmer has submitted a pre-harvest commitment of ${committedQuantity} tonnes for your ${requirement.crop} requirement.`
     });
@@ -108,13 +110,10 @@ router.put("/:id/status", auth, async (req, res) => {
     // If accepted, automatically instantiate a FarmProject
     if (status === "ACCEPTED") {
       // Create project
-      // Standard estimation: 1 acre = 5 tonnes yield. So acreage is roughly committedQuantity / 5 (minimum 1)
       const estimatedAcreage = Math.max(1, Math.round(commitment.committedQuantity / 5));
-      const cultivationCost = estimatedAcreage * 40000; // e.g. ₹40,000 per acre
-      const supportRequired = Math.round(cultivationCost * 0.4); // e.g. 40% support request by default
+      const cultivationCost = estimatedAcreage * 40000;
+      const supportRequired = Math.round(cultivationCost * 0.4);
 
-      // Date: expected delivery is e.g. June 30. Let's calculate expected harvest date
-      // We can default expected harvest date to 90 days from now, or parse delivery windows
       const harvestDate = new Date();
       harvestDate.setDate(harvestDate.getDate() + 90);
 
@@ -149,6 +148,53 @@ router.put("/:id/status", auth, async (req, res) => {
     }
 
     res.json(commitment);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// PUT /api/commitments/:id - Update generic commitment details (Admin only)
+router.put("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can edit commitment details" });
+    }
+    const commitment = await CropCommitment.findById(req.params.id);
+    if (!commitment) {
+      return res.status(404).json({ msg: "Commitment not found" });
+    }
+
+    const { expectedYield, committedQuantity, status, farmerId, buyerId, buyerRequirementId } = req.body;
+
+    if (expectedYield !== undefined) commitment.expectedYield = Number(expectedYield);
+    if (committedQuantity !== undefined) commitment.committedQuantity = Number(committedQuantity);
+    if (status) commitment.status = status;
+    if (farmerId) commitment.farmer = farmerId;
+    if (buyerId) commitment.buyer = buyerId;
+    if (buyerRequirementId) commitment.buyerRequirement = buyerRequirementId;
+
+    await commitment.save();
+    res.json(commitment);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// DELETE /api/commitments/:id - Delete a commitment (Admin only)
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Only admins can delete commitments" });
+    }
+    const commitment = await CropCommitment.findById(req.params.id);
+    if (!commitment) {
+      return res.status(404).json({ msg: "Commitment not found" });
+    }
+
+    await CropCommitment.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Commitment deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
